@@ -1,4 +1,4 @@
-@forelse($company->getCustomers() as $account)
+@forelse($company->getCustomers()->sortByDesc('created_at') as $account)
     <?php /** @var $account \WTG\Customer\Interfaces\CustomerInterface */ ?>
     <tr>
         <td>{{ $account->getUsername() }}</td>

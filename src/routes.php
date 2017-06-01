@@ -35,6 +35,9 @@ Route::group([
 
 //        Route::get('get', 'UserManagerController@get')->name('get');
 //        Route::get('added', 'UserManagerController@added')->name('added');
+        Route::patch('edit/{companyId}', 'UserManagerController@update')->name('update');
+
+        Route::delete('{companyId}', 'UserManagerController@delete')->name('delete');
 
         Route::post('create', 'UserManagerController@create')->name('create');
         Route::post('edit/{companyId}/create-account', 'UserManagerController@createAccount')->name('create-account');

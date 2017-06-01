@@ -19,14 +19,14 @@
             </li>
             <li class="{{ Route::is('admin::manager') ? 'active' : '' }}">
                 <a href="{{ route('admin::manager') }}">
-                    <i class="fa fa-fw fa-users"></i> Gebruikers beheren
+                    <i class="fa fa-fw fa-users"></i> Gebruikersbeheer
                 </a>
             </li>
-            <li class="{{ Route::is('admin::carousel') ? 'active' : '' }}">
-                <a href="{{ route('admin::carousel') }}">
-                    <i class="fa fa-fw fa-image"></i> Carousel
-                </a>
-            </li>
+            {{--<li class="{{ Route::is('admin::carousel') ? 'active' : '' }}">--}}
+                {{--<a href="{{ route('admin::carousel') }}">--}}
+                    {{--<i class="fa fa-fw fa-image"></i> Carousel--}}
+                {{--</a>--}}
+            {{--</li>--}}
             <li class="{{ Route::is('admin::export') ? 'active' : '' }}">
                 <a href="{{ route('admin::export') }}">
                     <i class="fa fa-fw fa-cogs"></i> Genereren
@@ -34,7 +34,7 @@
             </li>
             <li class="{{ Route::is('admin::content') ? 'active' : '' }}">
                 <a href="{{ route('admin::content') }}">
-                    <i class="fa fa-fw fa-pencil"></i> Inhoud aanpassen
+                    <i class="fa fa-fw fa-pencil"></i> Contentbeheer
                 </a>
             </li>
             <li class="{{ Route::is('admin::packs') ? 'active' : '' }}">

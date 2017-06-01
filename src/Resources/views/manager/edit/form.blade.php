@@ -1,4 +1,7 @@
 <form class="form form-horizontal" method="post">
+    {{ csrf_field() }}
+    {{ method_field('patch') }}
+
     <div class="form-group">
         <label for="name" class="col-sm-3 control-label">{{ trans('admin::manager.form.customer_number') }}</label>
         <div class="col-sm-9">

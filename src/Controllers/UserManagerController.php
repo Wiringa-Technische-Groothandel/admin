@@ -27,7 +27,7 @@ class UserManagerController extends Controller
      */
     public function view(Company $company)
     {
-        $companies = $company->paginate(20);
+        $companies = $company->orderBy('customer_number', 'asc')->paginate(20);
 
         return view('admin::manager.index', compact('companies'));
     }
@@ -37,7 +37,7 @@ class UserManagerController extends Controller
      *
      * @param  CreateCompanyRequest  $request
      * @param  Company  $company
-     * @return \Illuminate\Http\JsonResponse
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function create(CreateCompanyRequest $request, Company $company)
     {
@@ -48,15 +48,12 @@ class UserManagerController extends Controller
         $company->setActive(true);
 
         if ($company->save()) {
-            return response()->json([
-                'message' => trans('admin::manager.text.company_creation_success'),
-                'payload' => $company
-            ]);
+            return back()
+                ->with('status', trans('admin::manager.text.company_creation_success'));
         } else {
-            return response()->json([
-                'message' => trans('admin::manager.text.company_creation_error'),
-                'payload' => ''
-            ], Response::HTTP_BAD_REQUEST);
+            return back()
+                ->withErrors(trans('admin::manager.text.company_creation_error'))
+                ->withInput($request->input());
         }
     }
 
@@ -81,6 +78,34 @@ class UserManagerController extends Controller
         return view('admin::manager.edit', compact('company'));
     }
 
+    public function update(Request $request, string $companyId)
+    {
+        /** @var Company $company */
+        $company = app()
+            ->make(Company::class)
+            ->find($companyId);
+
+        if ($company === null) {
+            return back()
+                ->withErrors(trans('admin::manager.text.company_not_found', ['id' => $companyId]));
+        }
+
+        $company->setCustomerNumber($request->input('customerNumber'));
+        $company->setName($request->input('name'));
+        $company->save();
+
+        return back()
+            ->with('status', trans('admin::manager.text.company_update_success'));
+    }
+
+    /**
+     * Create a new account for a company.
+     *
+     * @param  CreateAccountRequest  $request
+     * @param  Customer  $customer
+     * @param  string  $companyId
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function createAccount(CreateAccountRequest $request, Customer $customer, string $companyId)
     {
         /** @var Company $company */
@@ -116,6 +141,44 @@ class UserManagerController extends Controller
                 ->withErrors(trans('admin::manager.text.account_creation_error'))
                 ->withInput($request->except(['password', 'password_confirmation']));
         }
+    }
+
+    /**
+     * Remove a company from the system.
+     *
+     * @param  Request  $request
+     * @param  string  $companyId
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function delete(Request $request, string $companyId)
+    {
+        /** @var Company $company */
+        $company = app()
+            ->make(Company::class)
+            ->find($companyId);
+
+        if ($company === null) {
+            return back()
+                ->withErrors(trans('admin::manager.text.company_not_found', ['id' => $companyId]));
+        }
+
+        if ($company->getId() === auth()->id()) {
+            return back()
+                ->withErrors(trans('admin::manager.text.remove_current_company_error'));
+        }
+
+        // Remove the accounts
+        $company->getCustomers()->each(function ($account) {
+            /** @var $account Customer */
+            $account->delete();
+        });
+
+        // Delete the company
+        $company->delete();
+
+        return redirect()
+            ->route('admin::manager')
+            ->with('status', trans('admin::manager.text.company_deleted'));
     }
 
     /**
@@ -175,7 +238,7 @@ class UserManagerController extends Controller
      * @param  Request  $request
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function delete(Request $request)
+    public function wdwd(Request $request)
     {
         if (!$request->has('company_id')) {
             return redirect()
@@ -213,7 +276,7 @@ class UserManagerController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function update(Request $request)
+    public function updat123e(Request $request)
     {
         $validator = \Validator::make($request->all(), [
             'company_id'   => 'required|integer|between:10000,99999',

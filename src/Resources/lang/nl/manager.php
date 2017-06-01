@@ -3,7 +3,6 @@
 return [
     'table' => [
         'head' => [
-            'id' => 'Debiteurnummer',
             'name' => 'Naam',
             'street' => 'Straat',
             'postcode' => 'Postcode',
@@ -13,7 +12,8 @@ return [
             'username' => 'Gebruikersnaam',
             'email' => 'E-Mail',
             'manager' => 'Beheerder',
-            'password' => 'Wachtwoord'
+            'password' => 'Wachtwoord',
+            'customer_number' => 'Debiteurnummer'
         ],
     ],
 
@@ -47,6 +47,13 @@ return [
         'create_account' => 'Account toevoegen',
         'delete_company_warning' => 'Weet u zeker dat u debiteur ":name" wilt verwijderen?',
         'password_hidden' => 'Wachtwoord verborgen',
-        'password_shown_warning' => ':password - Dit wachtwoord wordt veborgen als de pagina ververst wordt.'
+        'password_shown_warning' => ':password - Dit wachtwoord wordt veborgen als de pagina ververst wordt.',
+        'company_deleted' => 'De debiteur en bijbehorende accounts zijn verwijderd.',
+        'remove_current_company_error' => 'Dit account is momenteel ingelogd, deze kan niet verwijderd worden.',
+        'company_creation_success' => 'De debiteur is aangemaakt.',
+        'company_creation_error' => 'Er is een fout opgetreden tijdens het aanmaken van de debiteur.',
+        'account_creation_success' => 'Het account is aangemaakt.',
+        'account_creation_error' => 'Er is een fout opgetreden tijdens het aanmaken van de gebruiker.',
+        'company_update_success' => 'De debiteur is aangepast.'
     ]
 ];
