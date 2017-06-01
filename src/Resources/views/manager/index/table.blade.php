@@ -1,9 +1,17 @@
-<table class="table table-hover" id="company-table">
-    <thead>
+<div id="companies-table-wrapper">
+    <table class="table table-hover" id="companies-table">
+        <thead>
         @include('admin::manager.index.table.head')
-    </thead>
+        </thead>
 
-    <tbody>
+        <tbody>
         @include('admin::manager.index.table.body')
-    </tbody>
-</table>
+        </tbody>
+    </table>
+
+    <div class="text-center">
+        @if ($companies->count())
+            {{ $companies->appends(['filter' => $filter])->links() }}
+        @endif
+    </div>
+</div>

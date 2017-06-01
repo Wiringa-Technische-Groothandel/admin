@@ -39,6 +39,7 @@ Route::group([
 
         Route::delete('{companyId}', 'UserManagerController@delete')->name('delete');
 
+        Route::post('filter', 'UserManagerController@filter')->name('filter');
         Route::post('create', 'UserManagerController@create')->name('create');
         Route::post('edit/{companyId}/create-account', 'UserManagerController@createAccount')->name('create-account');
 //        Route::post('update', 'UserManagerController@update')->name('update');

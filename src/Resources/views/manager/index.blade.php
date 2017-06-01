@@ -12,10 +12,6 @@
                     @include('admin::manager.index.search')
 
                     @include('admin::manager.index.table')
-
-                    @if ($companies->count())
-                        {{ $companies->render() }}
-                    @endif
                 </div>
             </div>
         </div>

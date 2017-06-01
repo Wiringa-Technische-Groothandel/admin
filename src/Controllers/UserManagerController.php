@@ -19,17 +19,25 @@ use WTG\Customer\Interfaces\CustomerInterface as Customer;
  */
 class UserManagerController extends Controller
 {
+    const COMPANIES_PER_PAGE = 10;
+
     /**
      * The user management page.
      *
+     * @param  Request  $request
      * @param  Company  $company
      * @return \Illuminate\View\View
      */
-    public function view(Company $company)
+    public function view(Request $request, Company $company)
     {
-        $companies = $company->orderBy('customer_number', 'asc')->paginate(20);
+        $filter = $request->input('filter');
+        $companies = $company
+            ->where('customer_number', 'LIKE', "%{$filter}%")
+            ->orWhere('name', 'LIKE', "%{$filter}%")
+            ->orderBy('customer_number', 'asc')
+            ->paginate(static::COMPANIES_PER_PAGE);
 
-        return view('admin::manager.index', compact('companies'));
+        return view('admin::manager.index', compact('companies', 'filter'));
     }
 
     /**
@@ -179,6 +187,29 @@ class UserManagerController extends Controller
         return redirect()
             ->route('admin::manager')
             ->with('status', trans('admin::manager.text.company_deleted'));
+    }
+
+    /**
+     * Filter the companies list.
+     *
+     * @param  Request  $request
+     * @param  Company  $company
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function filter(Request $request, Company $company)
+    {
+        $filter = $request->input('filter');
+        $companies = $company
+            ->where('customer_number', 'LIKE', "%{$filter}%")
+            ->orWhere('name', 'LIKE', "%{$filter}%")
+            ->orderBy('customer_number', 'asc')
+            ->paginate(static::COMPANIES_PER_PAGE)
+            ->withPath(route('admin::manager'));
+
+        return response()->json([
+            'message' => trans('admin::manager.text.companies_filter_results'),
+            'payload' => view('admin::manager.index.table', compact('companies', 'filter'))->render()
+        ]);
     }
 
     /**

@@ -32,7 +32,8 @@ return [
         'manager' => 'Beheerder',
         'password_verification' => 'Wachtwoord (verificatie)',
         'email' => 'E-Mail',
-        'username' => 'Gebruikersnaam'
+        'username' => 'Gebruikersnaam',
+        'filter' => 'Filter'
     ],
 
     'text' => [
