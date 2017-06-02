@@ -32,18 +32,18 @@ Route::group([
     // Admin user manager
     Route::group(['as' => 'manager.', 'prefix' => 'manager'], function () {
         Route::get('edit/{companyId}', 'UserManagerController@edit')->name('edit');
+        Route::get('edit/{companyId}/{customerId}', 'UserManagerController@editAccount')->name('edit-account');
 
-//        Route::get('get', 'UserManagerController@get')->name('get');
-//        Route::get('added', 'UserManagerController@added')->name('added');
         Route::patch('edit/{companyId}', 'UserManagerController@update')->name('update');
+        Route::patch('edit/{companyId}/{customerId}', 'UserManagerController@updateAccount')->name('update-account');
 
         Route::delete('{companyId}', 'UserManagerController@delete')->name('delete');
+        Route::delete('{companyId}/{customerId}', 'UserManagerController@deleteAccount')->name('delete-account');
 
         Route::post('filter', 'UserManagerController@filter')->name('filter');
-        Route::post('create', 'UserManagerController@create')->name('create');
-        Route::post('edit/{companyId}/create-account', 'UserManagerController@createAccount')->name('create-account');
-//        Route::post('update', 'UserManagerController@update')->name('update');
-//        Route::post('delete', 'UserManagerController@delete')->name('delete');
+
+        Route::put('create', 'UserManagerController@create')->name('create');
+        Route::put('create/{companyId}', 'UserManagerController@createAccount')->name('create-account');
     });
 
     // Admin carousel manager

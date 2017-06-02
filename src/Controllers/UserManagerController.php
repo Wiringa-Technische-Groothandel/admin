@@ -2,11 +2,12 @@
 
 namespace WTG\Admin\Controllers;
 
-use Symfony\Component\HttpFoundation\Response;
 use Webpatser\Uuid\Uuid;
 use Illuminate\Http\Request;
 use WTG\Admin\Requests\CreateCompanyRequest;
 use WTG\Admin\Requests\CreateAccountRequest;
+use WTG\Admin\Requests\UpdateAccountRequest;
+use WTG\Admin\Requests\UpdateCompanyRequest;
 use WTG\Customer\Interfaces\CompanyInterface as Company;
 use WTG\Customer\Interfaces\CustomerInterface as Customer;
 
@@ -72,11 +73,9 @@ class UserManagerController extends Controller
      * @param  string  $companyId
      * @return \Illuminate\Http\RedirectResponse|\Illuminate\View\View
      */
-    public function edit(Request $request, string $companyId)
+    public function edit(Request $request, Company $company, string $companyId)
     {
-        $company = app()
-            ->make(Company::class)
-            ->find($companyId);
+        $company = $company->find($companyId);
 
         if ($company === null) {
             return back()
@@ -86,12 +85,18 @@ class UserManagerController extends Controller
         return view('admin::manager.edit', compact('company'));
     }
 
-    public function update(Request $request, string $companyId)
+    /**
+     * Update a company.
+     *
+     * @param  UpdateCompanyRequest  $request
+     * @param  Company  $company
+     * @param  string  $companyId
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function update(UpdateCompanyRequest $request, Company $company, string $companyId)
     {
         /** @var Company $company */
-        $company = app()
-            ->make(Company::class)
-            ->find($companyId);
+        $company = $company->find($companyId);
 
         if ($company === null) {
             return back()
@@ -110,16 +115,15 @@ class UserManagerController extends Controller
      * Create a new account for a company.
      *
      * @param  CreateAccountRequest  $request
+     * @param  Company  $company
      * @param  Customer  $customer
      * @param  string  $companyId
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function createAccount(CreateAccountRequest $request, Customer $customer, string $companyId)
+    public function createAccount(CreateAccountRequest $request, Company $company, Customer $customer, string $companyId)
     {
         /** @var Company $company */
-        $company = app()
-            ->make(Company::class)
-            ->find($companyId);
+        $company = $company->find($companyId);
 
         if ($company === null) {
             return back()
@@ -130,23 +134,144 @@ class UserManagerController extends Controller
         // Random pre-generated password
         $password = $request->input('password') ?: str_random(12);
 
+        // Make it the main account if it's the first account
+        $mainAccount = ($company->getCustomers()->count() === 0);
+
         $customer->setId(Uuid::generate(4));
         $customer->setCompanyId($company->getId());
         $customer->setUsername($request->input('username'));
         $customer->setPassword(bcrypt($password));
         $customer->setEmail($request->input('email'));
-        $customer->setManager($request->input('manager', false));
         $customer->setActive($request->input('active', false));
-        $customer->setIsMain($company->getCustomers()->count() === 0); // Make it the main account if it's the only one
+        $customer->setManager($request->input('manager', $mainAccount));
+        $customer->setIsMain($mainAccount);
 
         if ($customer->save()) {
             $request->session()->flash($customer->getId().'_password', $password);
 
             return back()
-                ->with('status', trans('admin::manager.text.account_creation_success'));
+                ->with('status', trans('admin::manager.text.account_create_success'));
         } else {
             return back()
-                ->withErrors(trans('admin::manager.text.account_creation_error'))
+                ->withErrors(trans('admin::manager.text.account_create_error'))
+                ->withInput($request->except(['password', 'password_confirmation']));
+        }
+    }
+
+    /**
+     * Delete a customer.
+     *
+     * @param  Request  $request
+     * @param  Company  $company
+     * @param  Customer  $customer
+     * @param  string  $companyId
+     * @param  string  $customerId
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function deleteAccount(Request $request, Company $company, Customer $customer, string $companyId, string $customerId)
+    {
+        /** @var Company $company */
+        $company = $company->find($companyId);
+
+        if ($company === null) {
+            return back()
+                ->withErrors(trans('admin::manager.text.company_not_found', ['id' => $companyId]));
+        }
+
+        /** @var Customer $customer */
+        $customer = $customer->find($customerId);
+
+        if ($customer === null) {
+            return back()
+                ->withErrors(trans('admin::manager.text.account_not_found', ['id' => $customerId]));
+        }
+
+        if ($customer->getIsMain()) {
+            return back()
+                ->withErrors(trans('admin::manager.text.main_account_delete_error'));
+        }
+
+        $customer->delete();
+
+        return redirect()
+            ->route('admin::manager.edit', ['companyId' => $company->getId()])
+            ->with('status', trans('admin::manager.text.account_delete_success'));
+    }
+
+    /**
+     * Edit an account.
+     *
+     * @param  Request  $request
+     * @param  Company  $company
+     * @param  Customer  $customer
+     * @param  string  $companyId
+     * @param  string  $customerId
+     * @return \Illuminate\Http\RedirectResponse|\Illuminate\View\View
+     */
+    public function editAccount(Request $request, Company $company, Customer $customer, string $companyId, string $customerId)
+    {
+        /** @var Company $company */
+        $company = $company->find($companyId);
+
+        if ($company === null) {
+            return back()
+                ->withErrors(trans('admin::manager.text.company_not_found', ['id' => $companyId]));
+        }
+
+        /** @var Customer $customer */
+        $customer = $customer->find($customerId);
+
+        if ($customer === null) {
+            return back()
+                ->withErrors(trans('admin::manager.text.account_not_found', ['id' => $customerId]));
+        }
+
+        return view('admin::manager.edit-account', compact('company', 'customer'));
+    }
+
+    /**
+     * Update an account.
+     *
+     * @param  UpdateAccountRequest  $request
+     * @param  Company  $company
+     * @param  Customer  $customer
+     * @param  string  $companyId
+     * @param  string  $customerId
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function updateAccount(UpdateAccountRequest $request, Company $company, Customer $customer, string $companyId, string $customerId)
+    {
+        /** @var Company $company */
+        $company = $company->find($companyId);
+
+        if ($company === null) {
+            return back()
+                ->withErrors(trans('admin::manager.text.company_not_found', ['id' => $companyId]));
+        }
+
+        /** @var Customer $customer */
+        $customer = $customer->find($customerId);
+
+        if ($customer === null) {
+            return back()
+                ->withErrors(trans('admin::manager.text.account_not_found', ['id' => $customerId]));
+        }
+
+        if ($request->input('password') !== "") {
+            $customer->setPassword(bcrypt($request->input('password')));
+        }
+
+        $customer->setUsername($request->input('username'));
+        $customer->setEmail($request->input('email'));
+        $customer->setActive($request->input('active', false));
+        $customer->setManager($request->input('manager', false));
+
+        if ($customer->save()) {
+            return back()
+                ->with('status', trans('admin::manager.account_edit_success'));
+        } else {
+            return back()
+                ->withErrors(trans('admin::manager.account_edit_error'))
                 ->withInput($request->except(['password', 'password_confirmation']));
         }
     }
@@ -155,30 +280,29 @@ class UserManagerController extends Controller
      * Remove a company from the system.
      *
      * @param  Request  $request
+     * @param  Company  $company
      * @param  string  $companyId
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function delete(Request $request, string $companyId)
+    public function delete(Request $request, Company $company, string $companyId)
     {
         /** @var Company $company */
-        $company = app()
-            ->make(Company::class)
-            ->find($companyId);
+        $company = $company->find($companyId);
 
         if ($company === null) {
             return back()
                 ->withErrors(trans('admin::manager.text.company_not_found', ['id' => $companyId]));
         }
 
-        if ($company->getId() === auth()->id()) {
+        if ($company->getId() === auth()->user()->getCompanyId()) {
             return back()
                 ->withErrors(trans('admin::manager.text.remove_current_company_error'));
         }
 
         // Remove the accounts
-        $company->getCustomers()->each(function ($account) {
-            /** @var $account Customer */
-            $account->delete();
+        $company->getCustomers()->each(function ($customer) {
+            /** @var Customer $customer */
+            $customer->delete();
         });
 
         // Delete the company
@@ -210,178 +334,5 @@ class UserManagerController extends Controller
             'message' => trans('admin::manager.text.companies_filter_results'),
             'payload' => view('admin::manager.index.table', compact('companies', 'filter'))->render()
         ]);
-    }
-
-    /**
-     * Get some user details.
-     *
-     * TODO: Rewrite for the new customer module
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function get(Request $request)
-    {
-        dd('Rewrite!');
-
-        if ($request->has('id')) {
-            $company = Company::with('mainUser')->where('login', $request->input('id'))->first();
-
-            if ($company !== null) {
-                return response()->json([
-                    'message' => 'User details for user '.$company->login,
-                    'payload' => $company,
-                ]);
-            } else {
-                return response()->json([
-                    'message' => 'No user found with login '.$request->input('id'),
-                ], 404);
-            }
-        } else {
-            return response()->json([
-                'message' => 'Missing request parameter: `id`',
-            ], 400);
-        }
-    }
-
-    /**
-     * Show the user added page.
-     *
-     * @return \Illuminate\View\View|\Illuminate\Http\RedirectResponse
-     */
-    public function added()
-    {
-        if (\Session::has('password') && \Session::has('input')) {
-            return view('admin.user.added')
-                ->with([
-                    'password' => \Session::pull('password'),
-                    'input' => \Session::get('input'),
-                ]);
-        } else {
-            return redirect()
-                ->route('admin.user::manager');
-        }
-    }
-
-    /**
-     * Remove a user
-     *
-     * @param  Request  $request
-     * @return \Illuminate\Http\RedirectResponse
-     */
-    public function wdwd(Request $request)
-    {
-        if (!$request->has('company_id')) {
-            return redirect()
-                ->back()
-                ->withInput($request->input())
-                ->withErrors('Geen debiteurnummer opgegeven');
-        }
-
-        // Get the company
-        $company = Company::whereLogin($request->input('company_id'))->first();
-
-        if ($company) {
-            // Remove associated users
-            $company->users->each(function ($user) {
-                $user->delete();
-            });
-
-            // Remove the company
-            $company->delete();
-
-            return redirect()
-                ->back()
-                ->with('status', 'Het bedrijf en bijbehorende gegevens zijn verwijderd');
-        } else {
-            return redirect()
-                ->back()
-                ->withInput($request->input())
-                ->withErrors('Geen bedrijf gevonden met login naam '.$request->input('company_id'));
-        }
-    }
-
-    /**
-     * Add/update a user.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\RedirectResponse
-     */
-    public function updat123e(Request $request)
-    {
-        $validator = \Validator::make($request->all(), [
-            'company_id'   => 'required|integer|between:10000,99999',
-            'company_name' => 'required|string',
-
-            'address'  => 'required',
-            'postcode' => 'required',
-            'city'     => 'required',
-
-            'email'  => 'required|email',
-            'active' => 'required',
-        ]);
-
-        if ($validator->passes()) {
-            if ($company = Company::whereLogin($request->input('company_id'))->first()) {
-                $company->login = $request->input('company_id');
-                $company->company = $request->input('company_name');
-                $company->street = $request->input('address');
-                $company->postcode = $request->input('postcode');
-                $company->city = $request->input('city');
-                $company->active = $request->input('active');
-
-                $company->save();
-
-                \Log::info('Company '.$company->login.' has been updated by an admin');
-
-                $user = $company->mainUser;
-
-                $user->username = $request->input('company_id');
-                $user->company_id = $request->input('company_id');
-                $user->email = $request->input('email');
-
-                $user->save();
-
-                \Log::info('User '.$user->username.' has been updated by an admin');
-
-                return redirect()
-                    ->back()
-                    ->with('status', 'Bedrijf '.$company->company_id.' is aangepast');
-            } else {
-                $pass = mt_rand(100000, 999999);
-
-                $company = new Company();
-
-                $company->login = $request->input('company_id');
-                $company->company = $request->input('company_name');
-                $company->street = $request->input('address');
-                $company->postcode = $request->input('postcode');
-                $company->city = $request->input('city');
-                $company->active = $request->input('active');
-
-                $company->save();
-
-                $user = new User();
-
-                $user->username = $request->input('company_id');
-                $user->company_id = $request->input('company_id');
-                $user->email = $request->input('email');
-                $user->manager = true;
-                $user->password = bcrypt($pass);
-
-                $user->save();
-
-                \Session::flash('password', $pass);
-                \Session::flash('input', $request->all());
-
-                return redirect()
-                    ->route('admin.user::added');
-            }
-        } else {
-            return redirect()
-                ->back()
-                ->withInput($request->input())
-                ->withErrors($validator->errors());
-        }
     }
 }

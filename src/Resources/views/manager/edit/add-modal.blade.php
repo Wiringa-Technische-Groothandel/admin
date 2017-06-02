@@ -1,5 +1,6 @@
 <form class="form form-horizontal" method="post" id="add-account-form" action="{{ route('admin::manager.create-account', ['companyId' => $company->getId()]) }}">
     {{ csrf_field() }}
+    {{ method_field('put') }}
 
     <div class="modal fade" tabindex="-1" role="dialog" id="add-account-modal">
         <div class="modal-dialog" role="document">

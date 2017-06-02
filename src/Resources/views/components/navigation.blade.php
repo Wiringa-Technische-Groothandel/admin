@@ -17,7 +17,7 @@
                     <i class="fa fa-fw fa-download"></i> Importeren
                 </a>
             </li>
-            <li class="{{ Route::is('admin::manager') ? 'active' : '' }}">
+            <li class="{{ Route::is('admin::manager*') ? 'active' : '' }}">
                 <a href="{{ route('admin::manager') }}">
                     <i class="fa fa-fw fa-users"></i> Gebruikersbeheer
                 </a>

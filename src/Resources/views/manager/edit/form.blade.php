@@ -28,6 +28,10 @@
         </div>
         <div class="col-sm-9">
             <button type="submit" class="btn btn-success">{{ trans('admin::manager.form.save') }}</button>
+
+            <a href="{{ route('admin::manager') }}" class="btn btn-default pull-right">
+                {{ trans('admin::manager.text.back') }}
+            </a>
         </div>
     </div>
 </form>

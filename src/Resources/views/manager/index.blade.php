@@ -1,5 +1,11 @@
 @extends('admin::master')
 
+@section('before-content')
+    <ol class="breadcrumb">
+        <li class="active">{{ trans('admin::manager.text.user_manager') }}</li>
+    </ol>
+@endsection
+
 @section('content')
     <div class="container-fluid">
         <div class="row">

@@ -39,11 +39,11 @@ class AuthAdmin
                 return response('Unauthorized.', 401);
             } else {
                 return redirect()
-                    ->guest(route('auth.login'));
+                    ->guest(route('auth::login'));
             }
         } elseif (! $this->auth->user()->isAdmin()) {
             return redirect()
-                ->to(route('account.dashboard'))
+                ->to(route('account::dashboard'))
                 ->withErrors(trans('admin::auth.no_admin_rights'));
         }
 
