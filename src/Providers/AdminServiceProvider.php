@@ -3,7 +3,9 @@
 namespace WTG\Admin\Providers;
 
 use WTG\Admin\Services\Stats;
+use Barryvdh\Snappy\Facades\SnappyPdf;
 use Illuminate\Support\ServiceProvider;
+use Barryvdh\Snappy\ServiceProvider as SnappyServiceProvider;
 
 /**
  * Admin service provider
@@ -35,6 +37,9 @@ class AdminServiceProvider extends ServiceProvider
      */
     public function register()
     {
+        $this->app->register(SnappyServiceProvider::class);
+        $this->app->alias("PDF", SnappyPdf::class);
+
         $this->app->bind(Stats::class);
     }
 }

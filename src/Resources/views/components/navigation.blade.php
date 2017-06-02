@@ -29,7 +29,7 @@
             {{--</li>--}}
             <li class="{{ Route::is('admin::export') ? 'active' : '' }}">
                 <a href="{{ route('admin::export') }}">
-                    <i class="fa fa-fw fa-cogs"></i> Genereren
+                    <i class="fa fa-fw fa-cogs"></i> Exporteren
                 </a>
             </li>
             <li class="{{ Route::is('admin::content') ? 'active' : '' }}">

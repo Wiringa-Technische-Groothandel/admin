@@ -2,13 +2,16 @@
 
 namespace WTG\Admin\Controllers;
 
-use WTG\Helper;
-use WTG\Models\Content;
-use WTG\Models\Product;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
+use Barryvdh\Snappy\PdfWrapper;
+use Barryvdh\Snappy\Facades\SnappyPdf as PDF;
+use Illuminate\Support\Facades\File;
+use WTG\Catalog\Interfaces\ProductInterface as Product;
+use WTG\Content\Interfaces\ContentInterface as Content;
 
 /**
- * Class ExportController.
+ * Export controller.
  *
  * @package     WTG\Admin
  * @subpackage  Controllers
@@ -19,54 +22,78 @@ class ExportController extends Controller
     /**
      * Catalog generation page.
      *
+     * @param  Content  $content
      * @return \Illuminate\View\View
      */
-    public function view()
+    public function view(Content $content)
     {
-        $content = Content::where('name', 'catalog.footer')->first();
+        $catalogFooter = $content->tag('admin.catalog_footer')->first();
 
-        return view('admin.export.index', [
-            'currentFooter' => $content->content,
-        ]);
+        return view('admin::export.index', compact('catalogFooter'));
     }
 
     /**
      * Generate the catalog PDF file.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param  Request  $request
+     * @param  Content  $content
+     * @param  Product  $product
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function catalog(Request $request)
+    public function catalog(Request $request, Content $content, Product $product)
     {
+        $footer = $content->tag('admin.catalog_footer')->first();
+
         if ($request->input('footer') !== '') {
-            $footer = Content::where('name', 'catalog.footer')->first();
-
-            $footer->content = $request->input('footer');
-
+            /** @var Content $footer */
+            $footer->setValue($request->input('footer'));
             $footer->save();
-
-            unset($footer);
         }
 
         ini_set('memory_limit', '1G');
 
-        $footer = Content::where('name', 'catalog.footer')->first();
-
-        $productData = \DB::table('products')
+        $publicFilename = "dl/Wiringa Catalogus.pdf";
+        $filename = 'catalog-'.date('YmdHis').'.pdf';
+        $storagePath = storage_path('app/public/'.$filename);
+        $publicPath = public_path($publicFilename);
+        /** @var Collection $products */
+        $products = $product
             ->orderBy('catalog_group', 'asc')
             ->orderBy('group', 'asc')
             ->orderBy('type', 'asc')
-            ->orderBy('number', 'asc')
+            ->orderBy('sku', 'asc')
             ->whereNotIn('action_type', ['Opruiming', 'Actie'])
             ->where('catalog_index', '!=', '')
             ->get();
 
-        \File::put(base_path().'/resources/assets/catalog.html', view('templates.catalogus', ['products' => $productData]));
+        $products = $products
+            ->groupBy('catalog_group')
+            ->map(function ($products, $group) {
+                return $products
+                    ->groupBy('series')
+                    ->map(function ($products, $series) {
+                        return $products->groupBy('type');
+                    });
+            });
 
-        exec('wkhtmltopdf --dump-outline "'.base_path().'/resources/assets/tocStyle.xml" -B 15mm --footer-center "'.$footer->content.'" --footer-right [page] --footer-font-size 7 "'.base_path().'/resources/assets/catalog.html" toc --xsl-style-sheet "'.base_path().'/resources/assets/tocStyle.xsl" "'.public_path().'/dl/Wiringa Catalogus.pdf"');
+        /** @var PdfWrapper $pdf */
+        $pdf = PDF::loadHTML(view('admin::export.templates.catalog', compact('products'))->render());
+        $pdf->setPaper('a4')
+            ->setOrientation('portrait')
+            ->setOption('footer-center', $footer->getValue())
+            ->setOption('footer-right', "[page]")
+            ->setOption('footer-font-size', 7)
+            ->setOption('toc', true)
+            ->setOption('xsl-style-sheet', base_path('resources/assets/catalog-stylesheet.xsl'))
+            ->save($storagePath);
 
-        return redirect()
-            ->intended('/dl/Wiringa Catalogus.pdf');
+        if (File::exists($publicPath)) {
+            File::delete($publicPath);
+        }
+
+        File::link($storagePath, $publicPath);
+
+        return redirect($publicFilename);
     }
 
     /**

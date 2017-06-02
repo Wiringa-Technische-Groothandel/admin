@@ -16,7 +16,9 @@
         "php": ">=7.0",
         "illuminate/support": "5.4.*",
         "webpatser/laravel-uuid": "2.*",
+        "barryvdh/laravel-snappy": "0.3.*",
         "wtg/base": "self.version",
-        "wtg/content": "self.version"
+        "wtg/content": "self.version",
+        "h4cc/wkhtmltopdf-amd64": "^0.12.3"
     }
 }

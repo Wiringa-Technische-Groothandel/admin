@@ -9,13 +9,13 @@
 
                     <hr />
 
-                    <form action="{{ route('admin.export::catalog') }}" method="POST" class="form form-horizontal">
+                    <form action="{{ route('admin::export.catalog') }}" method="POST" class="form form-horizontal">
                         {{ csrf_field() }}
 
                         <div class="form-group">
                             <label for="footer" class="col-sm-2 control-label">Pagina footer</label>
                             <div class="col-sm-10">
-                                <input class="form-control" placeholder="Pagina footer" type="text" value="{{ $currentFooter }}" name="footer" maxlength="300">
+                                <input class="form-control" placeholder="Pagina footer" type="text" value="{{ $catalogFooter->getValue() }}" name="footer" maxlength="300">
                             </div>
                         </div>
 
@@ -36,7 +36,7 @@
 
                     <hr />
 
-                    <form action="{{ route('admin.export::pricelist') }}" method="POST" class="form form-horizontal" enctype="multipart/form-data">
+                    <form action="{{ route('admin::export.pricelist') }}" method="POST" class="form form-horizontal" enctype="multipart/form-data">
                         {{ csrf_field() }}
 
                         <div class="form-group">
