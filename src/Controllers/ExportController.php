@@ -76,13 +76,12 @@ class ExportController extends Controller
                     });
             });
 
-        /** @var PdfWrapper $pdf */
-        $pdf = PDF::loadHTML(view('admin::export.templates.catalog', compact('products'))->render());
-        $pdf->setPaper('a4')
+        $pdf = PDF::setPaper('a4')
             ->setOrientation('portrait')
             ->setOption('footer-center', $footer->getValue())
             ->setOption('footer-right', "[page]")
             ->setOption('footer-font-size', 7)
+            ->loadView('admin::export.templates.catalog', compact('products'))
             ->setOption('toc', true)
             ->setOption('xsl-style-sheet', base_path('resources/assets/catalog-stylesheet.xsl'))
             ->save($storagePath);

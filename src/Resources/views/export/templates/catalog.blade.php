@@ -1,11 +1,4 @@
-<?php
-$lastype 	= '';
-$lastgroup	= '';
-$lastserie 	= '';
-$lastletter = '';
-?>
-
-        <!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
     <title>Wiringa Technische Groothandel catalogus</title>
@@ -141,9 +134,9 @@ $lastletter = '';
 
                         <div class="row">
                             <div class="col-xs-2 product-image">
-                                @if ($productsByType->first()->getImage() !== 'geenafbeelding.jpg')
+                                @if ($productsByType->first()->getImage(false) !== 'geenafbeelding.jpg')
                                     <div class="center">
-                                        <img src="http://wiringa.nl/img/products/{!! $productsByType->first()->getImage() !!}">
+                                        <img src="https://wiringa.nl/img/products/{{ $productsByType->first()->getImage(false) }}">
                                     </div>
                                 @endif
                             </div>
